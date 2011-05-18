@@ -1,0 +1,298 @@
+!!! html5
+%html
+  %head
+    %title hotspots performance report
+    - if $compiled
+      %link(href='app.css' rel='stylesheet' type='text/css' media='screen,projection')/
+      %script(type='text/javascript' src='app.js')
+      %script(type='text/javascript' src='hotspots.js')
+    - else
+      %link(href='stylesheets/screen.css' rel='stylesheet' type='text/css' media='screen,projection')/
+      - $javascripts.each do |file|
+        %script(type='text/javascript' src="#{file}")
+    :javascript
+      $(function(){
+        $summary = new SummaryDropdown()
+        $summary.update()
+        $summary.select('*')
+      })
+  %body
+    #page
+      .detail
+        %header summary
+        .row.centered.full
+          .summary.dropdown
+            .current
+              -#.triangle.down
+              %span.label
+            .more(style='display:none')
+              .controllers
+                %section.popularControllers
+                  %h3 popular controllers
+                %section.slowControllers
+                  %h3 slow controllers
+                %section.allControllers
+                  %h3 all controllers
+              .actions
+                %section.popularActions
+                  %h3 popular actions
+                %section.slowActions
+                  %h3 slow actions
+                %section.actionsIn(style='display:none')
+                  %h3 actions in controller
+
+        .row.centered
+          :javascript
+            new TimeSeries();
+
+        %header request/response breakdown
+        .row
+          .request_verb_graph
+            :javascript
+              new Bargraph(function(){ return DATA.requestMethods() }, {left:180});
+        .row
+          .response_code_graph
+            :javascript
+              new Bargraph(function(){ return DATA.responseCodes() }, {left:180});
+
+        %header response time
+        .centerlabel.responseTimes
+          %h2 291ms median response time
+          %h3 94% requests finish in &lt;0.5s
+
+        :javascript
+          $('.responseTimes').bind('redraw', function(){
+            var data = DATA.responseTimes();
+            $(this).find('h2').text(data.avg.durify() + ' avg response time')
+            $(this).find('h3').text(data.median.durify() + ' median / ' + _(data.list).last().durify() + ' max')
+          });
+
+        .row.sidebyside
+          :javascript
+            new Histogram(function(){ return DATA.responseTimes() });
+          :javascript
+            new Bargraph(function(){ return DATA.timeBreakdown() }, {left:65,width:300,barh:40});
+
+        %header.sub garbage collection
+        .row.sidebyside
+          .label.gcTimes
+            %h2 421ms median gc time
+            %h3 596ms max gc time
+
+            %h2(style='margin-top: 40px') 42% of requests trigger gc
+            %h3 2 collections per request
+
+          :javascript
+            $('.gcTimes').bind('redraw', function(){
+              var data = DATA.gcTimes();
+
+              $(this).find('h2:first').text(data.avg.durify() + ' avg GC time')
+              var max = _(data.list).last()
+              $(this).find('h3:first').text(data.median.durify() + ' median / ' + max.durify() + ' max')
+
+              var data = DATA.gcCalls();
+
+              $(this).find('h2:last').text(data.pct_with_gc.pctify() + ' of requests trigger GC')
+              $(this).find('h3:last').text(data.median_with_gc + ' collection'+(data.median_with_gc==1 ? '' : 's')+' per request / ' + _(data.list).last().commify() + ' max')
+            });
+          :javascript
+            new Histogram(function(){ return DATA.gcTimes() });
+
+        %header.sub cpu
+        .row.sidebyside
+          .label.cpuTimes
+            %h2 201ms median CPU time
+            %h3 504ms max
+            %h3 59% in userland
+          :javascript
+            $('.cpuTimes').bind('redraw', function(){
+              var data = DATA.cpuTimes();
+
+              $(this).find('h2').text(_(data.list).avg().durify() + ' avg CPU time')
+              $(this).find('h3:first').text(data.median.durify() + ' median / ' + _(data.list).last().durify() + ' max')
+              $(this).find('h3:last').text(data.user_pct.pctify() + ' in userland')
+            })
+          %span.graph
+            %script(type='text/javascript+protovis')
+              :plain
+                var w = 300,
+                  h = 110,
+                  radius = 50;
+
+                var vis = new pv.Panel()
+                  .width(w)
+                  .height(h)
+
+                vis.add(pv.Wedge)
+                  .data(function(){
+                    var data = DATA.cpuTimes();
+                    return [data.sys_pct/100, data.user_pct/100];
+                  })
+                  .outerRadius(radius)
+                  .angle(function(d) d * 2 * Math.PI)
+                  .fillStyle(function() this.index ? '#1f77b4' : '#aec7e8')
+                  .left(300/2 + radius/2)
+                  .bottom(55)
+                  //.left(function() 75
+                  //    + Math.cos(this.startAngle() + this.angle() / 2)
+                  //    * (!this.index ? 8 : 0))
+                  //.bottom(function() 75
+                  //    - Math.sin(this.startAngle() + this.angle() / 2)
+                  //    * (!this.index ? 8 : 0))
+
+                vis.render()
+                $(vis.canvas()).bind('redraw', function(){
+                  vis.render()
+                })
+
+        %header.sub i/o
+        .row.sidebyside
+          .label.ioTimes
+            %h2 214ms median I/O call
+            %h3(style='margin-bottom: 30px') 56% in read()
+
+            :javascript
+              new Bargraph(function(){ return DATA.ioBreakdown() }, {left:70,width:290});
+          :javascript
+            $('.ioTimes').bind('redraw', function(){
+              var data = DATA.ioTimes();
+              $(this).find('h2').text(data.avg.durify() + ' avg I/O time')
+              $(this).find('h3').text(data.median.durify() + ' median / ' + _(data.list).last().durify() + ' max')
+            })
+          :javascript
+            new Histogram(function(){ return DATA.ioTimes() })
+
+        %header.sub sql queries
+        .row.sidebyside
+          .label.sqlNums
+            %h2 13 queries per request
+            %h3 26 max
+          :javascript
+            $('.sqlNums').bind('redraw', function(){
+              var data = DATA.sqlNums();
+              $(this).find('h2').text(_(data.list).avg().round().commify() + ' avg queries per request')
+              $(this).find('h3').text((data.median||0).commify() + ' median / ' + _(data.list).last().commify() + ' max')
+            })
+          .sql_breakdown
+            :javascript
+              new Bargraph(function(){ return DATA.sqlBreakdown() }, {left:70,width:290});
+
+        %header objects created
+        .row.sidebyside
+          .object_breakdown
+            :javascript
+              new Bargraph(function(){ return DATA.objectBreakdown() },{left:70,width:330});
+          .label.objectNums
+            %h2 77,398 objects per request
+            %h3 512,392 objects max
+          :javascript
+            $('.objectNums').bind('redraw', function(){
+              var data = DATA.objectNums();
+              $(this).find('h2').text(_(data.list).avg().round().commify() + ' avg objects per request')
+              $(this).find('h3').text(data.median.commify() + ' median / ' + _(data.list).last().commify() + ' max')
+            });
+
+      .compare
+        .sorter
+          %select.what
+            %optgroup(label='controllers')
+              %option(value='*') all 21 controllers
+              %option(value='*[popular]') popular controllers
+            %optgroup(label='actions')
+              %option(value='#*') all 78 actions
+              %option(value='#*[popular]') popular actions
+            %optgroup(label='actions in')
+              %option(value='site#*') 3 actions in site#*
+              %option(value='user#*') 8 actions in user#*
+          sorted by
+          %select.order
+            %optgroup(label='overall')
+              %option(value='num_requests') # requests
+            %optgroup(label='response time')
+              %option(value='response_times.min') min response time
+              %option(value='response_time') median response time
+              %option(value='response_times.avg') avg response time
+              %option(value='response_times.max') max response time
+            %optgroup(label='gc time')
+              %option(value='gc_time') median gc time
+              %option(value='gc_times.avg') avg gc time
+              %option(value='gc_times.max') max gc time
+            %optgroup(label='gc collections')
+              %option(value='gc_calls.pct_with_gc') % requests w/ gc
+              %option(value='gc_calls.median_with_gc') median gc collections
+              %option(value='gc_calls.max') max gc collections
+            %optgroup(label='cpu')
+              %option(value='cpu_times.sys_pct') % time in kernel
+              %option(value='cpu_time') median cpu time
+              %option(value='cpu_times.avg') avg cpu time
+              %option(value='cpu_times.max') max cpu time
+            %optgroup(label='i/o')
+              %option(value='io_time') median i/o time
+              %option(value='io_times.avg') avg i/o time
+              %option(value='io_times.max') max i/o time
+            %optgroup(label='i/o ops')
+              %option(value='io_breakdown.select') % time in select()
+              %option(value='io_breakdown.poll') % time in poll()
+              %option(value='io_breakdown.read') % time in read()
+              %option(value='io_breakdown.write') % time in write()
+            %optgroup(label='sql queries')
+              %option(value='sql_num') median sql queries
+              %option(value='sql_nums.avg') avg sql queries
+              %option(value='sql_nums.max') max sql queries
+            %optgroup(label='sql query types')
+              %option(value='sql_breakdown.select') % select queries
+              %option(value='sql_breakdown.update') % update queries
+              %option(value='sql_breakdown.insert') % insert queries
+              %option(value='sql_breakdown.delete') % delete queries
+              %option(value='sql_breakdown.unknown') % other queries
+            %optgroup(label='objects created')
+              %option(value='object_num') median objects created
+              %option(value='object_nums.avg') avg objects created
+              %option(value='object_nums.max') max objects created
+            %optgroup(label='object types')
+              %option(value='object_breakdown.string') % strings created
+              %option(value='object_breakdown.hash') % hashs created
+              %option(value='object_breakdown.array') % arrays created
+              %option(value='object_breakdown.node') % nodes created
+
+        :javascript
+          var sorter = $('.compare .sorter')
+          sorter.find('select.what option[value="*"]').text('all '+DATA.controllers.length+' controllers')
+          sorter.find('select.what option[value="#*"]').text('all '+DATA.actions.length+' actions')
+
+          var group = sorter.find('select.what optgroup:last')
+          group.find('option').remove()
+          _(DATA.controllerNames()).each(function(name){
+            //group.append('<option value="'+name+'#*">'+name+(DATA.byName(name).actions.length+' actions').lpad(50-name.length,'&nbsp;')+'</option>')
+            group.append('<option value="'+name+'#*">'+name+'</option>')
+          })
+
+          sorter.bind('redraw', function(){
+          })
+          sorter.find('select.what').change(function(){
+            DATA.current_compare = $(this).val();
+            $.event.trigger('redraw');
+          })
+          sorter.find('select.order').change(function(){
+            DATA.current_compare_sort = $(this).val();
+            $.event.trigger('redraw');
+          })
+        #compareBarGraph
+        :javascript
+          $(function(){
+            var barh = 32;
+
+            new Bargraph(function(opts){
+              return DATA.compareView(opts)
+            },{
+              barh:barh,
+              max:0,
+              link:true,
+              left:200,
+              fontsize:17,
+              width:$('.compare').width(),
+              canvas:'compareBarGraph',
+              show_n:Math.floor(($(window).height()-$('#compareBarGraph').position().top+15)/barh)
+            })
+            $('.compare').css('position','fixed')
+          })

@@ -1,0 +1,140 @@
+#!/usr/bin/env ruby
+root = File.expand_path('../../', __FILE__)
+$:.unshift File.expand_path('lib', root)
+
+require 'rubygems'
+require 'trollop'
+require 'compass'
+require 'coffee_script'
+require 'uglifier'
+require 'haml'
+require 'fileutils'
+
+parser = Trollop::Parser.new do
+  version <<-EOS
+hotspots: a rails performance tool
+  version 0.1.0
+  (c) 2011 Aman Gupta (tmm1)
+  http://github.com/tmm1/hotspots
+EOS
+
+  banner <<-EOS
+hotspots shows you where your rails app is spending its time.
+
+hotspots [options] <input file>+ <output directory>
+
+All Options:\n
+
+EOS
+  opt :dev,
+    "do not uglify javascript",
+    :default => false
+
+  opt :watch,
+    "watch for changes to the source files and re-generate output",
+    :default => false
+end
+
+output_dir = nil
+input_files = []
+
+opts = Trollop.with_standard_exception_handling(parser) do
+  opts = parser.parse(ARGV)
+  raise Trollop::HelpNeeded if ARGV.size < 2
+
+  output_dir = ARGV.pop
+  input_files = ARGV.dup
+
+  unless input_files.all?{ |f| File.exist?(f) }
+    raise Trollop::HelpNeeded
+  end
+
+  opts
+end
+
+FileUtils.mkdir_p(output_dir)
+
+# haml
+$compiled = true unless opts[:dev]
+html = Haml::Engine.new(File.read("#{root}/app/src/app.haml")).render
+File.open("#{output_dir}/index.html", 'w'){ |f| f.write(html) }
+
+# sass
+compass =  Compass::Frameworks::ALL.map{ |f| "#{f.path}/stylesheets" }
+css = Sass::Engine.for_file("#{root}/app/src/app.sass", :load_paths => compass).render
+File.open("#{output_dir}/app.css", 'w'){ |f| f.write(css) }
+
+js = []
+
+# js libs
+js << File.read("#{root}/app/js/protovis-d3.2.js")
+js << File.read("#{root}/app/js/jquery-1.5.js")
+js << File.read("#{root}/app/js/underscore.js")
+
+# coffee
+Dir["#{root}/app/src/*.coffee"].each do |f|
+  js << CoffeeScript.compile(File.read(f))
+end
+
+# js bundle
+MultiJson.engine = :json_gem
+File.open("#{output_dir}/app.js", 'w'){ |f|
+  out = js.join("\n\n;\n\n")
+  # out = Uglifier.compile(out) unless opts[:dev]
+  f.write(out)
+}
+
+# hotspots data
+require 'hotspots/summarizer'
+
+list = [
+  overall =
+    Summarizer.new,
+
+  per_controller =
+    Summarizer.new{ |o|
+      if rails = o[:rails] and !rails.empty?
+        rails[:controller].sub(/^\//,'')
+      end
+    },
+
+  per_action =
+    Summarizer.new{ |o|
+      if rails = o[:rails] and !rails.empty?
+        rails[:controller].sub(/^\//,'') +
+        "#" +
+        rails[:action]
+      end
+    }
+]
+
+num = 0
+input = ARGF
+input.each_line do |line|
+  begin
+    obj = Yajl.load(line, :symbolize_keys=>true)
+  rescue Yajl::ParseError
+    STDERR.puts "invalid json on line #{num+=1}: #{line}"
+    next
+  end
+
+  list.each do |s|
+    begin
+      s << obj
+    rescue
+      p [$!, obj]
+      raise $!
+    end
+  end
+end
+
+File.open("#{output_dir}/hotspots.js", 'w') do |f|
+  f.print "DATA = new Data("
+  f.print Yajl.dump({
+    :overall => overall,
+    :controllers => per_controller,
+    :actions => per_action
+  }, :pretty=>true)
+  f.print ")"
+  f.puts
+end

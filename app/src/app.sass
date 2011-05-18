@@ -1,0 +1,187 @@
+@import "compass/reset"
+@import "compass/css3/box"
+@import "compass/css3/box-shadow"
+@import "compass/css3/text-shadow"
+@import "compass/css3/border-radius"
+@import "compass/css3/opacity"
+@import "compass/css3/transition"
+
+$default-transition-duration : 0.3s
+
+body
+  background-color: #ccc
+  color: #333
+  font-family: sans-serif
+
+svg
+  +transition(all)
+
+#page
+  +display-box
+  +box-align(stretch)
+  +box-orient(horizontal)
+
+  min-height: 100%
+
+  .detail
+    +box-shadow
+    margin-left: 100px
+    min-height: 800px
+    width: 600px
+    padding: 20px
+    background-color: #fff
+
+    h2
+      font-size: 16pt
+    h3
+      font-size: 13pt
+      font-style: italic
+      color: #999
+      margin-top: 3px
+      margin-bottom: 5px
+
+    .row
+      +display-box
+      &.centered
+        +box-pack(center)
+      &.justified
+        +box-pack(justify)
+      &.right
+        +box-pack(end)
+      &.sidebyside
+        +box-align(center)
+        .label
+          +box-flex(1)
+
+    header
+      margin-top: 35px
+      margin-bottom: 20px
+      font-variant: small-caps
+      &:first-child
+        margin-top: 0
+
+      &
+        text-align: left
+        font-size: 1.4em
+        background-color: #aaa
+        padding: 2px 5px 4px 5px
+        color: white
+        // +border-radius
+      &.sub
+        background-color: white
+        border-bottom: 1px solid #999
+        color: #999
+        text-align: right
+        font-size: 1.3em
+        padding: 0
+
+    .centerlabel
+      text-align: center
+      margin-bottom: 10px
+
+    .summary
+      //+text-shadow
+      //border: 1px solid #666
+      +box-flex(1)
+      margin-bottom: 20px
+      padding: 12px
+      padding-bottom: 4px
+      text-align: center
+      .label
+        font-size: 24pt
+        font: 'Lucidia Grande'
+
+      .triangle
+        float: right
+        height: 0
+        border:
+          width: 16px
+          style: solid
+        &.up
+          margin: 0 0 12px 10px
+          border:
+            color: transparent transparent #ddd transparent
+        &.down
+          margin: 12px 0 0 10px
+          border:
+            color: #ddd transparent transparent transparent
+
+      .more
+        +display-box
+        +box-pack(justify)
+        clear: right
+        cursor: auto
+        margin: 20px 0
+        .controllers
+          width: 49%
+          margin-right: 10px
+        .actions
+          +box-flex(1)
+        h3
+          margin-top: 16px
+          margin-bottom: 5px
+          text-align: left
+          border-bottom: 1px solid #ccc
+          border-top: 1px solid #ccc
+          font-variant: small-caps
+          font-style: normal
+          padding: 0 0 4px 0
+        .entry
+          +display-box
+          +box-pack(justify)
+          .name, .num
+            padding: 3px
+            cursor: pointer
+          .name
+            color: #666
+            +box-flex(1)
+            text-align: left
+            font-size: 0.85em
+            overflow: hidden
+          .num
+            color: #aaa
+            text-align: right
+            font-size: 0.75em
+          &.all
+            margin-bottom: 5px
+            .name, .num
+              font-style: italic
+          &:hover
+            background-color: #fffbeb
+          &.current
+            background-color: #fff4c9
+
+      +border-radius
+      //border: 1px solid #ddd
+
+      //&:hover, &.open
+      //  border-color: #999
+      //  .current
+      //    cursor: pointer
+      //    .triangle.down
+      //      border-color: #999 transparent transparent transparent
+      //    .triangle.up
+      //      border-color: transparent transparent #999 transparent
+
+    .request_verb_graph
+      font-size: 10pt
+      margin-bottom: 15px
+
+  .compare
+    //+box-shadow
+    +box-flex(1)
+    +text-shadow
+
+    //background-color: #ccc
+    // position: fixed
+    padding: 20px
+    margin-right: 20px
+    // margin-right: 100px
+    font-size: 14pt
+
+    .sorter
+      margin-bottom: 15px
+
+    span
+      padding: 0 5px
+
