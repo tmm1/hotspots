@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'fssm'
   s.add_dependency 'json'
   s.add_dependency 'sass'
+  s.add_dependency 'haml'
   s.add_dependency 'thin'
   s.add_dependency 'compass'
   s.add_dependency 'uglifier'
