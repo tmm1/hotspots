@@ -170,6 +170,7 @@
           :javascript
             $('.sqlNums').bind('redraw', function(){
               var data = DATA.sqlNums();
+              if (! data.list[0]) return;
               $(this).find('h2').text(_(data.list).avg().round().commify() + ' avg queries per request')
               $(this).find('h3').text((data.median||0).commify() + ' median / ' + _(data.list).last().commify() + ' max')
             })
@@ -188,6 +189,7 @@
           :javascript
             $('.objectNums').bind('redraw', function(){
               var data = DATA.objectNums();
+              if (! data.list[0]) return;
               $(this).find('h2').text(_(data.list).avg().round().commify() + ' avg objects per request')
               $(this).find('h3').text(data.median.commify() + ' median / ' + _(data.list).last().commify() + ' max')
             });
