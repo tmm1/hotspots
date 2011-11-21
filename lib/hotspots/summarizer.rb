@@ -229,9 +229,9 @@ class Summarizer
       :cpu_sys_time_pct  => @time[:cpu] == 0 ? 0 : (10000.0 *  @time[:stime]/@time[:cpu]).round / 100.0,
 
       :time_breakdown => {
-        'I/O' => (10000.0 *  @time[:io]/@time[:total]).round / 100.0,
-        'GC'  => (10000.0 *  @time[:gc]/@time[:total]).round / 100.0,
-        'CPU' => (10000.0 * @time[:cpu]/@time[:total]).round / 100.0,
+        'I/O' => @time[:total] == 0 ? 0 : ((10000.0 *  @time[:io]/@time[:total]).round / 100.0),
+        'GC'  => @time[:total] == 0 ? 0 : ((10000.0 *  @time[:gc]/@time[:total]).round / 100.0),
+        'CPU' => @time[:total] == 0 ? 0 : ((10000.0 * @time[:cpu]/@time[:total]).round / 100.0),
       },
       :io_breakdown => IO_OPS.inject({}){ |hash, op|
         hash["#{op}()"] = (10000.0 *  @time[op]/@time[:io]).round / 100.0 if @time[op] > 0
