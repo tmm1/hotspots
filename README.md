@@ -24,30 +24,30 @@ open hotspots-report/index.html
 
 ### summary
 
-![](/tmm1/hotspots/raw/master/screenshots/summary.png)
+![](screenshots/summary.png)
 
 ### top controllers and actions
 
-![](/tmm1/hotspots/raw/master/screenshots/top_controllers.png)
-![](/tmm1/hotspots/raw/master/screenshots/top_actions.png)
+![](screenshots/top_controllers.png)
+![](screenshots/top_actions.png)
 
 ### request/response types
 
-![](/tmm1/hotspots/raw/master/screenshots/request_response.png)
+![](screenshots/request_response.png)
 
 ### response time
 
-![](/tmm1/hotspots/raw/master/screenshots/response_time.png)
+![](screenshots/response_time.png)
 
 ### gc and objects
 
-![](/tmm1/hotspots/raw/master/screenshots/gc.png)
-![](/tmm1/hotspots/raw/master/screenshots/objects.png)
+![](screenshots/gc.png)
+![](screenshots/objects.png)
 
 ### sql
 
-![](/tmm1/hotspots/raw/master/screenshots/sql.png)
+![](screenshots/sql.png)
 
 ### sort options
 
-![](/tmm1/hotspots/raw/master/screenshots/sort_options.png)
+![](screenshots/sort_options.png)
